@@ -11,9 +11,7 @@ class Node:
         self.port = node_port
         self.group_members = group_members
         self.sequence_number = 0
-        self.timestamp = 0
         self.buffer = []
-        self.holdback_queue = []
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.ip, self.port))
         self.socket.listen()
@@ -45,42 +43,6 @@ class Node:
         #print(receivemessage)
         # self.handle_message(message)
 
-    def handle_message(self, message):
-        message_parts = message.split(";")
-        message_type = message_parts[0]
-        sender_id = int(message_parts[1])
-        message_content = message_parts[2]
-        if message_type == "MSG":
-            self.handle_group_message(sender_id, message_content)
-        elif message_type == "TS":
-            self.handle_timestamp(sender_id, message_content)
-
-    def handle_group_message(self, sender_id, message_content):
-        message_sequence_number = self.sequence_number
-        self.sequence_number += 1
-        message = "MSG;" + str(sender_id) + ";" + str(message_sequence_number) + ";" + message_content
-        self.send_message(message)
-
-    def handle_timestamp(self, sender_id, message_content):
-        timestamp_parts = message_content.split(",")
-        message_timestamp = int(timestamp_parts[0])
-        message_sequence_number = int(timestamp_parts[1])
-        self.timestamp = max(self.timestamp, message_timestamp) + 1
-        self.buffer.append((sender_id, message_sequence_number, message_content))
-        self.deliver_messages()
-    
-    def deliver_messages(self):
-        while len(self.buffer) > 0:
-            next_message = self.get_next_message()
-            if next_message is None:
-                break
-            sender_id, message_sequence_number, message_content = next_message
-            message_timestamp = message_content.split(",")[0]
-            if int(message_timestamp) == self.timestamp:
-                self.timestamp += 1
-                self.handle_group_message(sender_id, message_content.split(",")[1])
-            else:
-                self.holdback_queue.append(next_message)
     
     def get_next_message(self):
         for message in self.buffer:

@@ -10,7 +10,6 @@ class Node:
         self.port = node_port
         self.group_members = group_members
         self.sequence_number = 0
-        self.timestamp = 0
         self.buffer = []
         self.holdback_queue = []
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
